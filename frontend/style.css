@@ -1,0 +1,89 @@
+/* Reset & Global Styles */
+* { 
+    box-sizing: border-box; 
+    font-family: system-ui, Arial, sans-serif; 
+}
+body { 
+    margin: 0; 
+    background: #0f172a; 
+    color: #e2e8f0; 
+}
+
+/* Container */
+.container { 
+    max-width: 720px; 
+    margin: 32px auto; 
+    padding: 16px; 
+}
+
+/* Heading */
+h1 { 
+    margin-bottom: 16px; 
+    font-weight: 700; 
+}
+
+/* Chatbot Window */
+.chatBot {
+    height: 60vh; 
+    overflow-y: auto; 
+    background: #0b1220;
+    border: 1px solid #1e293b; 
+    border-radius: 12px; 
+    padding: 12px;
+}
+
+/* Messages */
+.msg { 
+    padding: 10px 12px; 
+    border-radius: 10px; 
+    margin: 8px 0; 
+    white-space: pre-wrap; 
+    line-height: 1.35; 
+}
+.msg.user { 
+    background: #1e293b; 
+    align-self: flex-end; 
+}
+.msg.bot { 
+    background: #0a3b2a; 
+}
+.msg.system { 
+    background: #3b0a0a; 
+}
+
+/* Input & Button Row */
+.query { 
+    display: grid; 
+    grid-template-columns: 1fr auto; 
+    gap: 8px; 
+    margin-top: 12px; 
+}
+input[type="text"] {
+    padding: 12px; 
+    border-radius: 10px; 
+    border: 1px solid #1e293b; 
+    background: #0b1220; 
+    color: #e2e8f0;
+    outline: none; /* Removes default browser blue outline */
+}
+input[type="text"]::placeholder {
+    color: #94a3b8; /* Softer placeholder text */
+}
+
+/* Button */
+button {
+    padding: 12px 16px; 
+    border-radius: 10px; 
+    border: 1px solid #1e293b; 
+    background: #111827; 
+    color: #e2e8f0; 
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+button:hover:not(:disabled) {
+    background: #1e293b;
+}
+button:disabled { 
+    opacity: 0.6; 
+    cursor: not-allowed; 
+}
