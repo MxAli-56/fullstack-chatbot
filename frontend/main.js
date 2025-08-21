@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const botMsgElem = appendMessage("bot", "");
 
-      const res = await fetch("/chat", {
+      const res = await fetch("/http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_input: message }),

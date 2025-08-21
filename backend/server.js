@@ -6,6 +6,7 @@ const dotenv = require("dotenv")
 const connectDB = require("./db")
 const userRoutes =  require("./routes/userRoutes")
 const messageRoutes = require("./routes/messageRoutes")
+const aiRoutes = require("./routes/aiRoutes")
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(cors())
 app.use(express.json())
 app.use("/api/users", userRoutes)
 app.use("/api/messages", messageRoutes)
+app.use("/api/chat", aiRoutes)
 
 app.get("/", (req,res) => {
     res.send("Api is working!")
