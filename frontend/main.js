@@ -8,28 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token")
   if(!token){
     window.location.href = "login.html";
-  }
-  else{
-    async function loadMessages(){
-    try {
-        const res = await fetch("http://localhost:5000/api/messages", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application.json",
-            Authorizations: `Bearer ${token}`,
-          },
-        });
-
-        const messages = await res.json()
-        messages.forEach(msg => {
-          appendMessage(msg.senderid === userId ? "user" : "bot", msg.text)
-        });
-      } catch (error) {
-        appendMessage("system", "Failed to load chat history: ", error.message)
-      }
-    }
-    loadMessages()
-  }
+  } 
   function appendMessage(role, text) {
     const div = document.createElement("div");
     div.className = `msg ${role}`;
@@ -38,6 +17,51 @@ document.addEventListener("DOMContentLoaded", () => {
     chatbot.scrollTop = chatbot.scrollHeight;
     return div;
   };
+
+  async function loadMessages() {
+    try {
+      const res = await fetch("http://localhost:5000/api/messages", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        // token invalid/expired → force login
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (!res.ok) {
+        const txt = await res.text();
+        appendMessage(
+          "system",
+          txt || `Failed to load history (${res.status})`
+        );
+        return;
+      }
+
+      const history = await res.json(); // expect array of { text, sender, ... }
+      // Show a friendly first message if no history yet
+      if (!Array.isArray(history) || history.length === 0) {
+        appendMessage("bot", "I am your local Chatbot, ask me anything!");
+        return;
+      }
+
+      history.forEach((msg) => {
+        const role = msg.sender === "user" ? "user" : "bot";
+        appendMessage(role, msg.text);
+      });
+    } catch (err) {
+      appendMessage("system", `Could not load history: ${err.message}`);
+    }
+  }
+
+  // Call it right away
+  loadMessages();
 
   function setBusy(isBusy) {
     btn.disabled = isBusy;
@@ -61,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: message }),
+        body: JSON.stringify({ text: message, sender: "user" }),
       });
 
       // Add empty bot bubble
@@ -116,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: botMsgElem.textContent }),
+        body: JSON.stringify({ text: botMsgElem.textContent, sender: "bot" }),
       });
     } catch (e) {
       appendMessage("system", `Network error ${e.message}`);
