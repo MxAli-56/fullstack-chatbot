@@ -1,6 +1,5 @@
 // backend/routes/aiRoutes.js
 const express = require("express");
-const fetch = require("node-fetch");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -19,7 +18,7 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 
   try {
-    const response = await fetch(OLLAMA_URL, {
+    const response = await fetch("http://localhost:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

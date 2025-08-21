@@ -92,11 +92,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const botMsgElem = appendMessage("bot", "");
 
       // Call AI (Node backend)
+
       const res = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_input: message }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ prompt: message }),
       });
+
 
       if (!res.ok) {
         const err = await res.text();
