@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setBusy(true);
 
     try {
+      // Save user message in DB
       await fetch("http://localhost:5000/api/messages", {
         method: "POST",
         headers: {
@@ -63,9 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ text: message }),
       });
 
+      // Add empty bot bubble
       const botMsgElem = appendMessage("bot", "");
 
-      const res = await fetch("/http://localhost:5000/api/chat", {
+      // Call AI (Node backend)
+      const res = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_input: message }),
@@ -77,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Handle streaming text
+      // Stream AI response
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let partialText = "";
@@ -88,25 +91,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
         partialText += decoder.decode(value, { stream: true });
 
-        // Process each SSE line
-        const lines = partialText.split("\n\n");
-        partialText = lines.pop(); // Save unfinished part
+        const lines = partialText.split("\n");
+        partialText = lines.pop();
 
         for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
-          const jsonStr = line.slice(5).trim();
-          if (jsonStr === "[DONE]") return;
+          if (!line.trim()) continue;
           try {
-            const data = JSON.parse(jsonStr);
+            const data = JSON.parse(line);
             if (data.token) {
-              botMsgElem.textContent += data.token;
+              botMsgElem.textContent += data.token; // streaming typing
+            } else if (data.done) {
+              break;
             }
           } catch (err) {
-            console.error("Parse error", err);
+            console.error("Parse error", err, line);
           }
         }
       }
 
+      // Save bot reply in DB
       await fetch("http://localhost:5000/api/messages", {
         method: "POST",
         headers: {
@@ -115,7 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify({ text: botMsgElem.textContent }),
       });
-
     } catch (e) {
       appendMessage("system", `Network error ${e.message}`);
     } finally {
