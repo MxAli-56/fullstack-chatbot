@@ -10,6 +10,26 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "login.html";
   }
   else{
+    async function loadMessages(){
+    try {
+        const res = await fetch("http://localhost:5000/api/messages", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application.json",
+            Authorizations: `Bearer ${token}`,
+          },
+        });
+
+        const messages = await res.json()
+        messages.forEach(msg => {
+          appendMessage(msg.senderid === userId ? "user" : "bot", msg.text)
+        });
+      } catch (error) {
+        appendMessage("system", "Failed to load chat history: ", error.message)
+      }
+    }
+    loadMessages()
+  }
   function appendMessage(role, text) {
     const div = document.createElement("div");
     div.className = `msg ${role}`;
@@ -34,7 +54,15 @@ document.addEventListener("DOMContentLoaded", () => {
     setBusy(true);
 
     try {
-      // Create placeholder for bot's streaming response
+      await fetch("http://localhost:5000/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: message }),
+      });
+
       const botMsgElem = appendMessage("bot", "");
 
       const res = await fetch("/chat", {
@@ -78,6 +106,16 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       }
+
+      await fetch("http://localhost:5000/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: botMsgElem.textContent }),
+      });
+
     } catch (e) {
       appendMessage("system", `Network error ${e.message}`);
     } finally {
@@ -99,4 +137,4 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("token")
     window.location.href = "login.html"
   })
-}});
+});
