@@ -9,20 +9,48 @@ body {
     color: #e2e8f0; 
 }
 
-/* Container */
-.container { 
-    max-width: 720px; 
-    margin: 32px auto; 
-    padding: 16px; 
+/* Navbar */
+.navbar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: #111827;
+    border-bottom: 1px solid #1e293b;
+    z-index: 100;
+}
+.navbar h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+.navbar button {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
+    background: #111827;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.navbar button:hover {
+    background: #1e293b;
 }
 
-/* Heading */
+/* Container (Chatbot) */
+.container { 
+    max-width: 720px; 
+    margin: 55px auto 32px; 
+    padding: 16px; 
+}
 h1 { 
     margin-bottom: 16px; 
     font-weight: 700; 
 }
-
-/* Chatbot Window */
 .chatBot {
     height: 60vh; 
     overflow-y: auto; 
@@ -31,8 +59,6 @@ h1 {
     border-radius: 12px; 
     padding: 12px;
 }
-
-/* Messages */
 .msg { 
     padding: 10px 12px; 
     border-radius: 10px; 
@@ -40,18 +66,9 @@ h1 {
     white-space: pre-wrap; 
     line-height: 1.35; 
 }
-.msg.user { 
-    background: #1e293b; 
-    align-self: flex-end; 
-}
-.msg.bot { 
-    background: #0a3b2a; 
-}
-.msg.system { 
-    background: #3b0a0a; 
-}
-
-/* Input & Button Row */
+.msg.user { background: #1e293b; align-self: flex-end; }
+.msg.bot { background: #0a3b2a; }
+.msg.system { background: #3b0a0a; }
 .query { 
     display: grid; 
     grid-template-columns: 1fr auto; 
@@ -64,13 +81,9 @@ input[type="text"] {
     border: 1px solid #1e293b; 
     background: #0b1220; 
     color: #e2e8f0;
-    outline: none; /* Removes default browser blue outline */
+    outline: none;
 }
-input[type="text"]::placeholder {
-    color: #94a3b8; /* Softer placeholder text */
-}
-
-/* Button */
+input[type="text"]::placeholder { color: #94a3b8; }
 button {
     padding: 12px 16px; 
     border-radius: 10px; 
@@ -80,10 +93,72 @@ button {
     cursor: pointer;
     transition: background 0.2s ease;
 }
-button:hover:not(:disabled) {
-    background: #1e293b;
+button:hover:not(:disabled) { background: #1e293b; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ========================= */
+/* AUTH PAGES (Login/Signup) */
+/* ========================= */
+.auth-container {
+    max-width: 400px;
+    margin: 120px auto; 
+    background: #111827;
+    padding: 32px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    text-align: center;
 }
-button:disabled { 
-    opacity: 0.6; 
-    cursor: not-allowed; 
+.auth-container h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 600;
+}
+.auth-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.auth-container input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
+    background: #0b1220;
+    color: #e2e8f0;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.auth-container input::placeholder {
+    color: #cbd5e1;
+    opacity: 0.5;     
+}
+
+.auth-container input:focus {
+    border-color: #3b82f6; /* blue highlight */
+    box-shadow: 0 0 6px #3b82f6;
+}
+.auth-container button {
+    padding: 12px;
+    border-radius: 8px;
+    background: #2563eb;
+    border: none;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.auth-container button:hover {
+    background: #1d4ed8;
+}
+.auth-container p {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #94a3b8; /* softer gray */
+}
+.auth-container a {
+    color: #3b82f6;
+    text-decoration: none;
+}
+.auth-container a:hover {
+    text-decoration: underline;
 }

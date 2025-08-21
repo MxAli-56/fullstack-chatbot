@@ -1,8 +1,15 @@
+// main.js
+
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("userInput");
   const btn = document.getElementById("sendBtn");
   const chatbot = document.getElementById("chatBot");
 
+  const token = localStorage.getItem("token")
+  if(!token){
+    window.location.href = "login.html";
+  }
+  else{
   function appendMessage(role, text) {
     const div = document.createElement("div");
     div.className = `msg ${role}`;
@@ -10,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chatbot.appendChild(div);
     chatbot.scrollTop = chatbot.scrollHeight;
     return div;
-  }
+  };
 
   function setBusy(isBusy) {
     btn.disabled = isBusy;
@@ -87,4 +94,9 @@ document.addEventListener("DOMContentLoaded", () => {
       sendMessage();
     }
   });
-});
+
+  document.getElementById("logoutBtn")?.addEventListener('click', function(){
+    localStorage.removeItem("token")
+    window.location.href = "login.html"
+  })
+}});
