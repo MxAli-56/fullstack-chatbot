@@ -111,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Stream AI response
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      const typingIndicator = appendMessage("Bot", "AI is typing...")
       let partialText = "";
 
       while (true) {
@@ -127,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const data = JSON.parse(line);
             if (data.token) {
-              botMsgElem.textContent += data.token; // streaming typing
+              typingIndicator.textContent += data.token; // streaming typing
             } else if (data.done) {
               break;
             }
@@ -158,6 +159,26 @@ document.addEventListener("DOMContentLoaded", () => {
       input.focus();
     }
   }
+
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+
+  // Apply saved theme on page load
+  if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark-mode");
+    themeToggleBtn.textContent = "Light Mode";
+  }
+
+  // Toggle theme on click
+  themeToggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    if (document.body.classList.contains("dark-mode")) {
+      localStorage.setItem("theme", "dark");
+      themeToggleBtn.textContent = "Light Mode";
+    } else {
+      localStorage.setItem("theme", "light");
+      themeToggleBtn.textContent = "Dark Mode";
+    }
+  });
 
   btn.addEventListener("click", () => {
     if (abortController){
