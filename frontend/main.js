@@ -17,6 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chatbot.scrollTop = chatbot.scrollHeight;
     return div;
   };
+  
+  let abortController = null
 
   async function loadMessages() {
     try {
@@ -44,16 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const history = await res.json(); // expect array of { text, sender, ... }
-      // Show a friendly first message if no history yet
-      if (!Array.isArray(history) || history.length === 0) {
-        appendMessage("bot", "I am your local Chatbot, ask me anything!");
-        return;
-      }
-
+      const history = await res.json(); 
       history.forEach((msg) => {
-        const role = msg.sender === "user" ? "user" : "bot";
-        appendMessage(role, msg.text);
+        appendMessage(msg.senderid === token ? "user" : "bot", msg.text); 
       });
     } catch (err) {
       appendMessage("system", `Could not load history: ${err.message}`);
@@ -64,10 +59,10 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMessages();
 
   function setBusy(isBusy) {
-    btn.disabled = isBusy;
-    input.disabled = isBusy;
-    btn.textContent = isBusy ? "Sending..." : "Send";
+    btn.disabled = false;
+    btn.textContent = isBusy ? "🛑" : "Send";
   }
+
 
   async function sendMessage() {
     const message = input.value.trim();
@@ -93,6 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Call AI (Node backend)
 
+      abortController = new AbortController()
+      const signal = abortController.signal
+
       const res = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: {
@@ -100,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ prompt: message }),
+        signal
       });
 
 
@@ -148,19 +147,30 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ text: botMsgElem.textContent, sender: "bot" }),
       });
     } catch (e) {
-      appendMessage("system", `Network error ${e.message}`);
+      if (err.name === "AbortError") {
+        appendMessage("system", "AI response stopped.");
+      } else {
+        appendMessage("system", `Network error: ${err.message}`);
+      }
     } finally {
       setBusy(false);
+      abortController = null
       input.focus();
     }
   }
 
-  btn.addEventListener("click", sendMessage);
+  btn.addEventListener("click", () => {
+    if (abortController){
+      abortController.abort()
+    }else{
+      sendMessage()
+    }
+  });
 
   input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      if(!abortController) sendMessage();
     }
   });
 
