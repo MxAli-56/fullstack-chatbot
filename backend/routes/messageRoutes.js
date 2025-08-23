@@ -34,8 +34,30 @@ router.post("/", authMiddleware, async (req, res) => {
 
 router.get("/", authMiddleware, async(req,res) => {
     try {
-        const getMessage = await Messages.find({senderid: req.user.id}).sort({timestamp: 1})
-        return res.json(getMessage)
+        const userId = req.user.id;
+
+        // Parse query params
+        const limit = Math.min(parseInt(req.query.limit || "20", 10), 100); // cap at 100
+        const before = req.query.before ? new Date(req.query.before) : null;
+
+        // Build query: only this user's messages
+        const query = { senderid: userId };
+
+        // If "before" given, only messages older than that timestamp
+        if (before && !isNaN(before.getTime())) {
+          query.timestamp = { $lt: before };
+        }
+
+        // Get newest first, limited
+        const docs = await Messages.find(query)
+          .sort({ timestamp: -1 })
+          .limit(limit)
+          .lean();
+
+        // Reverse to oldest->newest for natural rendering
+        const result = docs.reverse();
+
+        res.json(result);
     } catch (error) {
         return res.status(500).json({error: error.message})
     }
