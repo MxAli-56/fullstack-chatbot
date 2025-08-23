@@ -3,15 +3,29 @@
 const express = require ("express")
 const authMiddleware = require ("../middleware/authMiddleware")
 const Messages = require ("../models/Messages")
+const rateLimit = require ("express-rate-limit")
+const Filter = require("bad-words");
 
 const router = express.Router()
+const filter = new Filter();
 
-router.post("/", authMiddleware, async (req, res) => {
+const messageLimiter = rateLimit({
+  windowMs: 1000, 
+  max: 1, 
+  keyGenerator: (req, res) => req.user.id,
+  message: { error: "You're sending messages too fast, slow down." },
+});
+
+router.post("/", authMiddleware, messageLimiter,  async (req, res) => {
   try {
     const { text, sender, name } = req.body; // sender will be "user" or "bot"
 
     if (!text || !text.trim()) {
       return res.status(400).json({ message: "Message cannot be empty" });
+    }
+
+    if (filter.isProfane(text)) {
+      return res.status(400).json({ message: "Message contains inappropriate words." });
     }
 
     const newMessage = new Messages({

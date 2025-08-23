@@ -125,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function sendMessage() {
     const message = input.value.trim();
+    const contextMessages = message.slice(-30).map((msg) => `${msg.name}: ${msg.text}`).join("\n");
     if (!message) return;
 
     appendMessage("user", message);
@@ -139,7 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: message, sender: "user", name: displayName }),
+        body: JSON.stringify({
+          text: `${contextMessages}\nUser: ${message}\nAI:`,
+          sender: "user",
+          name: displayName,
+        }),
       });
 
       // Add empty bot bubble
@@ -203,7 +208,11 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: botMsgElem.textContent, sender: "bot", name: botName }),
+        body: JSON.stringify({
+          text: botMsgElem.textContent,
+          sender: "bot",
+          name: botName,
+        }),
       });
     } catch (e) {
       if (err.name === "AbortError") {
