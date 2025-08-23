@@ -124,6 +124,16 @@ h1 {
   margin-top: 5px;
 }
 
+.username {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.msg.user .username { color: #22c55e; }   
+.msg.bot  .username { color: #60a5fa; }
+
 /* 🔹 Responsive Design */
 @media (max-width: 600px) {
   h1 {
@@ -253,3 +263,5 @@ body.dark-mode .typingIndicator {
 .auth-container a:hover {
     text-decoration: underline;
 }
+
+

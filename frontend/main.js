@@ -4,21 +4,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("userInput");
   const btn = document.getElementById("sendBtn");
   const chatbot = document.getElementById("chatBot");
-  let oldestTimestamp = null; // oldest message we currently have
-  let loadingOlder = false; // guard to avoid double fetch
-  const PAGE_SIZE = 20; // how many to load each time
+  let oldestTimestamp = null; 
+  let loadingOlder = false; 
+  const PAGE_SIZE = 20; 
+  const displayName = localStorage.getItem("name") || "You"
+  const botName = "ChatAI"
 
   const token = localStorage.getItem("token");
   if (!token) {
     window.location.href = "login.html";
   }
-  function appendMessage(role, text) {
-    const div = document.createElement("div");
-    div.className = `msg ${role}`;
-    div.textContent = text;
-    chatbot.appendChild(div);
+  function appendMessage(role, text, name = "") {
+    const wrap = document.createElement("div");
+    wrap.className = `msg ${role}`;
+
+    if(name){
+      const u = document.createElement(div)
+      u.className = "username"
+      u.textContent = name
+      wrap.appendChild(u)
+    }
+    const body = document.createElement(div)
+    body.textContent = text
+    wrap.appendChild(body)
+    
+    chatbot.appendChild(wrap);
     chatbot.scrollTop = chatbot.scrollHeight;
-    return div;
+    return wrap;
   }
 
   let abortController = null;
@@ -61,8 +73,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (initial) {
         batch.forEach((msg) => {
-          const role = msg.senderid === "bot" ? "bot" : "user";
-          appendMessage(role, msg.text);
+          const role = msg.sender === "bot" ? "bot" : "user";
+          const name = msg.name || (role === "bot" ? botName : displayName);
+          appendMessage(role, msg.text, name);
         });
 
         // After initial load, scroll to bottom
@@ -126,11 +139,11 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: message, sender: "user" }),
+        body: JSON.stringify({ text: message, sender: "user", name: displayName }),
       });
 
       // Add empty bot bubble
-      const botMsgElem = appendMessage("bot", "");
+      const botMsgElem = appendMessage("bot", "", botName);
 
       // Call AI (Node backend)
 
@@ -190,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: botMsgElem.textContent, sender: "bot" }),
+        body: JSON.stringify({ text: botMsgElem.textContent, sender: "bot", name: botName }),
       });
     } catch (e) {
       if (err.name === "AbortError") {

@@ -18,6 +18,8 @@ if (signupForm){
                 body: JSON.stringify({name, email, password})
             })
             const data = await res.json()
+            localStorage.setItem("name", name)
+
             alert(data.message || "Signup successful, Now Login!")
             window.location.href = "login.html"
 
@@ -44,6 +46,9 @@ if (loginForm){
             const data = await res.json()
             if (data.token){
                 localStorage.setItem("token", data.token)
+                if (data.user && data.user.name){
+                    localStorage.setItem("name", data.user.name)
+                }                
                 alert("Login Successful")
                 window.location.href = "index.html"
             }

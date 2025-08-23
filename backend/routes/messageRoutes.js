@@ -8,16 +8,17 @@ const router = express.Router()
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { text, sender } = req.body; // sender will be "user" or "bot"
+    const { text, sender, name } = req.body; // sender will be "user" or "bot"
 
     if (!text || !text.trim()) {
       return res.status(400).json({ message: "Message cannot be empty" });
     }
 
     const newMessage = new Messages({
-      text,
-      sender: sender || "user", // default to "user"
-      senderid: sender === "user" ? req.user.id : null, // only save user id if it's from user
+      text: text,
+      sender: sender || "user", 
+      name: name || "",
+      senderid: req.user.id
     });
 
     const savedMessage = await newMessage.save();
