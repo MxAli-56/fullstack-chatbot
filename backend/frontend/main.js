@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Fetch the current user's name
   async function getCurrentUserName() {
     try {
-      const res = await fetch("http://localhost:5000/api/current-user", {
+      const res = await fetch("/api/current-user", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -31,8 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Failed to fetch user name:", error);
     }
-    await getCurrentUserName();
   }
+  getCurrentUserName();
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!initial && oldestTimestamp) params.set("before", oldestTimestamp);
 
       const res = await fetch(
-        `http://localhost:5000/api/messages?${params.toString()}`,
+        `/api/messages?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // 1) Persist user message
-      const saveUserRes = await fetch("http://localhost:5000/api/messages", {
+      const saveUserRes = await fetch("/api/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
       abortController = new AbortController();
       const signal = abortController.signal;
 
-      const chatRes = await fetch("http://localhost:5000/api/chat", {
+      const chatRes = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -316,7 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 3) Persist bot reply
       if (botText && botText.trim()) {
-        const saveBotRes = await fetch("http://localhost:5000/api/messages", {
+        const saveBotRes = await fetch("/api/messages", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

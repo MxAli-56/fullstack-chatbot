@@ -50,7 +50,7 @@ router.post("/login", async (req,res) => {
 
         const token = jwt.sign(
             {id: findUser.id},
-            process.env.JWT_Secret,
+            process.env.JWT_SECRET,
             {expiresIn: "1h"}
         )
 
@@ -87,7 +87,7 @@ router.get("/", async (req, res) => {
 
 router.get("/me", authMiddleware, async(req,res) => {
     try {
-      const loginuser = await User.findById(req.loginuser.id).select("-password");
+      const loginuser = await User.findById(req.user.id).select("-password");
       if (!loginuser) {
         return res.status(404).json({ message: "User not found" });
       }
