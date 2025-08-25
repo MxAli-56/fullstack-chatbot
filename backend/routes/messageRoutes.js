@@ -1,3 +1,4 @@
+//messageRoute.js
 const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const Messages = require("../models/Messages");
@@ -23,10 +24,12 @@ router.post("/", authMiddleware, messageLimiter, async (req, res) => {
     }
 
     // 🚫 Block inappropriate words
-    
+
     if (leoProfanity.check(text)) {
-      return res.status(400).json({ message: "Message contains inappropriate words." });
-    } 
+      return res
+        .status(400)
+        .json({ message: "Message contains inappropriate words." });
+    }
 
     // Validate sender (only user or bot allowed)
     const validSenders = ["user", "bot"];
@@ -70,9 +73,9 @@ router.get("/", authMiddleware, async (req, res) => {
       .lean();
 
     // Add timestamp field for frontend compatibility
-    const messagesWithTimestamp = docs.map(msg => ({
+    const messagesWithTimestamp = docs.map((msg) => ({
       ...msg,
-      timestamp: msg.createdAt
+      timestamp: msg.createdAt,
     }));
 
     // REMOVE .reverse() here - let frontend handle ordering
