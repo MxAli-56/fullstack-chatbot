@@ -1,6 +1,5 @@
 // api/index.js
-const serverless = require("serverless-http");
 require("dotenv").config();
-const app = require("../backend/app"); // ← point to your app.js
+const app = require("../backend/app");
 
-module.exports = serverless(app);
+module.exports = app; // ← Just export the app directly, no serverless-http needed

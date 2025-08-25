@@ -1,48 +1,39 @@
+// backend/app.js
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
-const connectDB = require("./db");
+const app = express();
 
-// routes
+// Middleware
+app.use(express.json());
+
+// Serve static files from frontend directory (correct path)
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+// Import and use your routes
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
-const app = express();
-
-// connect to DB
-connectDB();
-
-// middlewares
-app.use(cors());
-app.use(express.json());
-
-// API routes
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/chat", aiRoutes);
 
-// Serve frontend static files (CSS, JS, images)
-app.use(express.static(path.join(__dirname, "frontend")));
-
-// Serve login page at /
+// Serve HTML files
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "login.html"));
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
-// Serve chat page at /chat after login
-app.get("/chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+app.get("/login.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/login.html"));
 });
 
-// Health check route
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", message: "Server is healthy" });
+app.get("/signup.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/signup.html"));
 });
 
-// Catch-all for other non-API routes (optional, for safety)
-app.get(/^\/(?!api).*$/, (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "login.html"));
+// Catch-all for SPA routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
 module.exports = app;
