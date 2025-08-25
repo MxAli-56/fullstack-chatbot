@@ -1,4 +1,3 @@
-// app.js
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -23,17 +22,27 @@ app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/chat", aiRoutes);
 
-// Serve frontend static files
+// Serve frontend static files (CSS, JS, images)
 app.use(express.static(path.join(__dirname, "frontend")));
+
+// Serve login page at /
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "login.html"));
+});
+
+// Serve chat page at /chat after login
+app.get("/chat", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+});
 
 // Health check route
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Server is healthy" });
 });
 
-// ✅ Catch-all route for non-API requests (Vercel-safe)
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+// Catch-all for other non-API routes (optional, for safety)
+app.get(/^\/(?!api).*$/, (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "login.html"));
 });
 
 module.exports = app;
