@@ -2,4 +2,7 @@
 require("dotenv").config();
 const app = require("../backend/app");
 
-module.exports = app; // ← Just export the app directly, no serverless-http needed
+// Add console log to confirm it's loading
+console.log("API server starting...");
+
+module.exports = app;
