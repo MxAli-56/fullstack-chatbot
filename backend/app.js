@@ -31,11 +31,8 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Server is healthy" });
 });
 
-// Catch-all route: serve index.html for non-API requests
-app.use((req, res, next) => {
-  if (req.path.startsWith("/api/")) {
-    return res.status(404).json({ error: "Not found" });
-  }
+// ✅ Catch-all route for non-API requests (Vercel-safe)
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
 
