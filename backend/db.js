@@ -1,5 +1,4 @@
 //db.js
-// db.js
 const mongoose = require("mongoose");
 
 let isConnected = false; // connection state
