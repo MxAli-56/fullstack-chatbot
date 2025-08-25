@@ -7,8 +7,8 @@
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  background: var(--bg-color, #f4f4f9);
-  color: var(--text-color, #333);
+  background: #f8f9fa;  
+  color: #222;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -16,11 +16,17 @@ body {
 
 /* Navbar */
 .navbar {
-  background: var(--header-bg, #6200ee);
+  background: #444;
   color: white;
   padding: 10px 20px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 15px;
   align-items: center;
 }
 
@@ -40,7 +46,8 @@ body {
 h1 {
   text-align: center;
   font-size: 1.2rem;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  margin-top: 2px;
 }
 
 /* Chat area */
@@ -48,9 +55,10 @@ h1 {
   flex: 1;
   overflow-y: auto;
   padding: 10px;
-  border: 1px solid #ddd;
   border-radius: 10px;
-  background: var(--chat-bg, #fff);
+  background: #e3eaefdc;  
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -73,10 +81,15 @@ h1 {
 }
 
 .msg.bot {
-  background: #e5e5ea;
-  color: #111;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
+    background: #e5e5ea;
+    color: #111;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.msg.bot .msg-body {
+  max-width: 100%;  
+  margin-right: auto;
 }
 
 .msg.system {
@@ -85,6 +98,11 @@ h1 {
   align-self: center;
   font-size: 0.85rem;
   border-radius: 10px;
+}
+
+.msg.system.fade-out {
+  opacity: 0;
+  transition: opacity 300ms ease;
 }
 
 /* Input area */
@@ -106,7 +124,7 @@ h1 {
   padding: 10px 15px;
   border: none;
   border-radius: 8px;
-  background: #6200ee;
+  background: #444;
   color: white;
   font-size: 1rem;
   cursor: pointer;
@@ -115,13 +133,6 @@ h1 {
 .query button:disabled {
   background: #aaa;
   cursor: not-allowed;
-}
-
-/* Typing indicator */
-.typingIndicator {
-  font-style: italic;
-  color: gray;
-  margin-top: 5px;
 }
 
 .username {
@@ -201,13 +212,13 @@ body.dark-mode .typingIndicator {
 /* AUTH PAGES (Login/Signup) */
 /* ========================= */
 .auth-container {
-    max-width: 400px;
-    margin: 120px auto; 
-    background: #111827;
-    padding: 32px 24px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    text-align: center;
+  max-width: 500px;         /* was 400px – now wider */
+  margin: 80px auto;        /* closer to top */
+  background: #1e1e2f;      /* dark bluish instead of pure white */
+  padding: 40px 32px;       /* bigger padding */
+  border-radius: 16px;      /* smoother corners */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  text-align: center;
 }
 .auth-container h2 {
     margin-bottom: 20px;

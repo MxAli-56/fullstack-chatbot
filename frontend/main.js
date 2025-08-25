@@ -1,55 +1,104 @@
-// main.js
-
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("userInput");
   const btn = document.getElementById("sendBtn");
   const chatbot = document.getElementById("chatBot");
-  let oldestTimestamp = null; 
-  let loadingOlder = false; 
-  const PAGE_SIZE = 20; 
-  const displayName = localStorage.getItem("name") || "You"
-  const botName = "ChatAI"
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
 
+  let abortController = null;
+  let oldestTimestamp = null;
+  let loadingOlder = false;
+  let hasMoreHistory = true; // stop infinite loads when server returns < PAGE_SIZE
+
+  const PAGE_SIZE = 20;
+  let displayName = localStorage.getItem("name") || "You";
+
+  // Fetch the current user's name
+  async function getCurrentUserName() {
+    try {
+      const res = await fetch("http://localhost:5000/api/current-user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        displayName = data.name;
+        localStorage.setItem("name", data.name); // Optionally store it
+      }
+    } catch (error) {
+      console.error("Failed to fetch user name:", error);
+    }
+    await getCurrentUserName();
+  }
   const token = localStorage.getItem("token");
+
   if (!token) {
     window.location.href = "login.html";
+    return;
   }
-  function appendMessage(role, text, name = "") {
+
+  function appendMessage(role, text, name = "", opts) {
     const wrap = document.createElement("div");
     wrap.className = `msg ${role}`;
 
-    if(name){
-      const u = document.createElement(div)
-      u.className = "username"
-      u.textContent = name
-      wrap.appendChild(u)
+    if (name) {
+      const u = document.createElement("div");
+      u.className = "username";
+      u.textContent = name;
+      wrap.appendChild(u);
     }
-    const body = document.createElement(div)
-    body.textContent = text
-    wrap.appendChild(body)
-    
+
+    const body = document.createElement("div");
+    body.className = "msg-body";
+    body.innerHTML = marked.parse(text);
+    wrap.appendChild(body);
+
     chatbot.appendChild(wrap);
     chatbot.scrollTop = chatbot.scrollHeight;
+
+    // Ephemeral behavior: auto-remove after 2s for system messages
+    const isSystem = role === "system";
+    const ephemeral =
+      opts && typeof opts.ephemeral === "boolean" ? opts.ephemeral : isSystem;
+    const timeoutMs = (opts && opts.timeoutMs) || 2000;
+
+    if (ephemeral) {
+      setTimeout(() => {
+        // start fade
+        wrap.classList.add("fade-out");
+        // remove after transition
+        setTimeout(() => {
+          if (wrap && wrap.parentNode) wrap.remove();
+        }, 320);
+      }, timeoutMs);
+    }
+
     return wrap;
   }
 
-  let abortController = null;
-
+  function setBusy(isBusy) {
+    btn.disabled = false;
+    btn.textContent = isBusy ? "🛑" : "Send";
+  }
 
   async function loadMessages(initial = false) {
+    if (!hasMoreHistory) return;
+
     try {
       const params = new URLSearchParams();
       params.set("limit", PAGE_SIZE.toString());
-      // only include "before" on subsequent loads (when we have an oldest)
-      if (!initial && oldestTimestamp) {
-        params.set("before", oldestTimestamp);
-      }
+      if (!initial && oldestTimestamp) params.set("before", oldestTimestamp);
 
-      const res = await fetch(`http://localhost:5000/api/messages?${params.toString()}`,
-        { method: "GET",
+      const res = await fetch(
+        `http://localhost:5000/api/messages?${params.toString()}`,
+        {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
-             Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -69,93 +118,133 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const batch = await res.json(); 
+      const batch = await res.json(); // Expecting an array of { text, sender, name?, timestamp }
+
+      if (!Array.isArray(batch) || batch.length === 0) {
+        hasMoreHistory = false;
+        return;
+      }
+
+      const oldestIndex = 0;
 
       if (initial) {
-        batch.forEach((msg) => {
-          const role = msg.sender === "bot" ? "bot" : "user";
-          const name = msg.name || (role === "bot" ? botName : displayName);
-          appendMessage(role, msg.text, name);
-        });
+        // Render from oldest -> newest
+        const normalized = [...batch].reverse();
+        for (const msg of normalized) {
+          const role =
+            msg.sender === "bot"
+              ? "bot"
+              : msg.sender === "system"
+              ? "system"
+              : "user";
 
-        // After initial load, scroll to bottom
+          const name = msg.name || (role === "bot" ? "ChatAI" : "You");
+
+          appendMessage(role, msg.text, name);
+        }
         chatbot.scrollTop = chatbot.scrollHeight;
       } else {
         const oldHeight = chatbot.scrollHeight;
 
-        // Prepend in order (oldest->newest), so we insert before first child each time
-        for (const msg of batch) {
-          const role = msg.sender === "bot" ? "bot" : "user";
-          const div = document.createElement("div");
-          div.className = `msg ${role}`;
-          div.textContent = msg.text;
-          chatbot.insertBefore(div, chatbot.firstChild);
+        // We want to prepend oldest->newest so the final visual order is preserved
+        const normalized = [...batch].reverse();
+        for (const msg of normalized) {
+          const role =
+            msg.sender === "bot"
+              ? "bot"
+              : msg.sender === "system"
+              ? "system"
+              : "user";
+
+          // Build exactly like appendMessage, but insert as the first child
+          const wrap = document.createElement("div");
+          wrap.className = `msg ${role}`;
+
+          if (msg.name) {
+            const u = document.createElement("div");
+            u.className = "username";
+            u.textContent = msg.name;
+            wrap.appendChild(u);
+          }
+
+          const body = document.createElement("div");
+          body.className = "msg-body";
+          body.textContent = msg.text;
+          wrap.appendChild(body);
+
+          chatbot.insertBefore(wrap, chatbot.firstChild);
         }
 
-        // Adjust scroll so it doesn't jump
         const newHeight = chatbot.scrollHeight;
-        chatbot.scrollTop = newHeight - oldHeight;
+        chatbot.scrollTop = newHeight - oldHeight; // preserve viewport position
       }
 
-      const oldest = batch[0];
-      if (oldest && oldest.timestamp) {
-        oldestTimestamp = oldest.timestamp; 
+      // Oldest after normalization is the last element of the original array
+      const oldestMsg = batch[batch.length - 1];
+      if (oldestMsg && oldestMsg.createdAt) {
+        oldestTimestamp = oldestMsg.createdAt;
+      }
+
+      if (batch.length < PAGE_SIZE) {
+        hasMoreHistory = false; // no more pages
       }
     } catch (err) {
       appendMessage("system", `Could not load history: ${err.message}`);
     }
   }
 
-  // Call once on startup
+  // Initial history load
   loadMessages(true);
 
-  // Detect scroll-to-top to load older messages
+  // Infinite scroll: pull older messages at top
   chatbot.addEventListener("scroll", async () => {
-    if (chatbot.scrollTop === 0 && !loadingOlder) {
+    if (chatbot.scrollTop === 0 && !loadingOlder && hasMoreHistory) {
       loadingOlder = true;
       await loadMessages(false);
       loadingOlder = false;
     }
   });
 
-  function setBusy(isBusy) {
-    btn.disabled = false;
-    btn.textContent = isBusy ? "🛑" : "Send";
-  }
-
   async function sendMessage() {
     const message = input.value.trim();
-    const contextMessages = message.slice(-30).map((msg) => `${msg.name}: ${msg.text}`).join("\n");
     if (!message) return;
 
-    appendMessage("user", message);
+    // Optimistic UI for user message
+    appendMessage("user", message, "You");
     input.value = "";
+    input.focus();
     setBusy(true);
 
     try {
-      // Save user message in DB
-      await fetch("http://localhost:5000/api/messages", {
+      // 1) Persist user message
+      const saveUserRes = await fetch("http://localhost:5000/api/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          text: `${contextMessages}\nUser: ${message}\nAI:`,
+          text: message,
           sender: "user",
           name: displayName,
         }),
       });
 
-      // Add empty bot bubble
-      const botMsgElem = appendMessage("bot", "", botName);
+      if (!saveUserRes.ok) {
+        const reason = await saveUserRes.text();
+        appendMessage("system", reason || "Could not save your message.");
+        return;
+      }
 
-      // Call AI (Node backend)
+      // 2) Create bot bubble placeholder and stream into it
+      const botWrap = appendMessage("bot", "", "ChatAI");
+      const botBody = botWrap.querySelector(".msg-body");
 
+      let botText = "";
       abortController = new AbortController();
       const signal = abortController.signal;
 
-      const res = await fetch("http://localhost:5000/api/chat", {
+      const chatRes = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -165,56 +254,87 @@ document.addEventListener("DOMContentLoaded", () => {
         signal,
       });
 
-      if (!res.ok) {
-        const err = await res.text();
-        appendMessage("system", err || `Request failed (${res.status})`);
+      if (!chatRes.ok) {
+        const errText = await chatRes.text();
+        appendMessage(
+          "system",
+          errText || `Request failed (${chatRes.status})`
+        );
         return;
       }
 
-      // Stream AI response
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      const typingIndicator = appendMessage("Bot", "AI is typing...");
-      let partialText = "";
+      if (!chatRes.body || !chatRes.body.getReader) {
+        // Fallback for non-streaming responses
+        const data = await chatRes.json().catch(() => null);
+        botText = data?.reply || "";
+        botBody.textContent = botText;
+      } else {
+        // Streaming NDJSON: one JSON per line { token?: string, done?: boolean }
+        const reader = chatRes.body.getReader();
+        const decoder = new TextDecoder();
+        let partial = "";
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
 
-        partialText += decoder.decode(value, { stream: true });
+          partial += decoder.decode(value, { stream: true });
+          const lines = partial.split("\n");
+          partial = lines.pop() || ""; // keep the last incomplete chunk
 
-        const lines = partialText.split("\n");
-        partialText = lines.pop();
-
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const data = JSON.parse(line);
-            if (data.token) {
-              typingIndicator.textContent += data.token; // streaming typing
-            } else if (data.done) {
-              break;
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const obj = JSON.parse(line);
+              if (obj.token) {
+                botText += obj.token;
+                botBody.textContent = botText;
+                chatbot.scrollTop = chatbot.scrollHeight;
+              }
+              if (obj.done) {
+                // stream finished from server side
+              }
+            } catch (e) {
+              console.error("Stream parse error:", e, line);
             }
-          } catch (err) {
-            console.error("Parse error", err, line);
+          }
+        }
+
+        // Flush any remaining buffered data if it is a complete JSON
+        if (partial.trim()) {
+          try {
+            const obj = JSON.parse(partial);
+            if (obj.token) {
+              botText += obj.token;
+              botBody.textContent = botText;
+            }
+          } catch (_) {
+            // ignore trailing noise
           }
         }
       }
 
-      // Save bot reply in DB
-      await fetch("http://localhost:5000/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          text: botMsgElem.textContent,
-          sender: "bot",
-          name: botName,
-        }),
-      });
-    } catch (e) {
+      // 3) Persist bot reply
+      if (botText && botText.trim()) {
+        const saveBotRes = await fetch("http://localhost:5000/api/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            text: botText,
+            sender: "bot",
+            name: "ChatAI",
+          }),
+        });
+
+        if (!saveBotRes.ok) {
+          const reason = await saveBotRes.text();
+          appendMessage("system", reason || "Could not save bot reply.");
+        }
+      }
+    } catch (err) {
       if (err.name === "AbortError") {
         appendMessage("system", "AI response stopped.");
       } else {
@@ -223,20 +343,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       setBusy(false);
       abortController = null;
-      input.focus();
     }
   }
 
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
-
-  // Apply saved theme on page load
+  // THEME
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark-mode");
-    themeToggleBtn.textContent = "Light Mode";
+    if (themeToggleBtn) themeToggleBtn.textContent = "Light Mode";
   }
 
-  // Toggle theme on click
-  themeToggleBtn.addEventListener("click", () => {
+  themeToggleBtn?.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
     if (document.body.classList.contains("dark-mode")) {
       localStorage.setItem("theme", "dark");
@@ -247,23 +363,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  btn.addEventListener("click", () => {
+  // Helper: stop current AI response
+  function stopResponse() {
     if (abortController) {
       abortController.abort();
+      setBusy(false);
+      abortController = null;
+    }
+  }
+
+  // SEND / STOP button (mouse click)
+  btn.addEventListener("click", () => {
+    if (abortController) {
+      stopResponse();
     } else {
       sendMessage();
     }
   });
 
-  input.addEventListener("keydown", function (e) {
+  // Enter to send / stop
+  input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (!abortController) sendMessage();
+      if (abortController) {
+        stopResponse();
+      } else {
+        sendMessage();
+      }
     }
   });
 
-  document.getElementById("logoutBtn")?.addEventListener("click", function () {
+  // Logout
+  document.getElementById("logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("name");
     window.location.href = "login.html";
   });
 });

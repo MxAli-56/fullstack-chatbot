@@ -8,7 +8,7 @@ const authMiddleware = require("../middleware/authMiddleware")
 
 const router = express.Router()
 
-router.post("/Signup", async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -54,7 +54,14 @@ router.post("/login", async (req,res) => {
             {expiresIn: "1h"}
         )
 
-        return res.json({message: "login successful", token})
+        return res.json({
+          message: "login successful",
+          token,
+          user: {
+            name: findUser.name, // ← This is what's missing!
+            email: findUser.email,
+          },
+        });
     } catch (error) {
         return res.status(500).json({message: "Something went wrong"})
     }
@@ -89,6 +96,17 @@ router.get("/me", authMiddleware, async(req,res) => {
         return res.status(500).json({message: "Error fetching user info"})
     }
 })
+
+// Add this to your user routes or auth routes
+router.get("/current-user", authMiddleware, async (req, res) => {
+  try {
+    // Assuming you have a User model
+    const user = await User.findById(req.user.id).select("name");
+    res.json({ name: user.name });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 module.exports = router

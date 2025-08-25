@@ -1,7 +1,5 @@
-// backend/routes/aiRoutes.js
 const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
-
 const router = express.Router();
 
 // Ollama config (same as config.py)
@@ -51,10 +49,12 @@ router.post("/", authMiddleware, async (req, res) => {
       for (const line of lines) {
         try {
           const obj = JSON.parse(line);
+
           if (obj.response) {
             // Send each token as JSON line
             res.write(JSON.stringify({ token: obj.response }) + "\n");
           }
+
           if (obj.done) {
             res.write(JSON.stringify({ done: true }) + "\n");
             res.end();

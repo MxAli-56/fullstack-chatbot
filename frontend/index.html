@@ -9,24 +9,26 @@
 <body>
     <header class="navbar">
         <h2 class="logo">Chatbot</h2>
+        <div class="nav-actions">
         <button id="themeToggleBtn">Dark Mode</button>
         <button id="logoutBtn">Logout</button>
+        </div>
     </header>
 
     <main class="container">
     <h1>A Simple Chatbot with Local AI - OLLAMA</h1>
 
     <div id="chatBot" class="chatBot">
-        <div class="msg Bot">I am your local Chatbot, Ask me anything!</div>
+        <div class="msg bot">I am your local Chatbot, Ask me anything!</div>
     </div>
 
     <div class="query">
     <input type="text" placeholder="Enter Your Query Here" id="userInput" name="user_input" autocomplete="off">
     <button type="button" id="sendBtn">Send</button>
     </div>
-    <div class="typingIndicator" style="display: none;">AI is typing...</div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
